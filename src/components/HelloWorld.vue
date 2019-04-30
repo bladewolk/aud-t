@@ -1,58 +1,95 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+    <v-container>
+        <v-layout
+                text-xs-center
+                wrap
+        >
+            <table class="w-100" v-if="list.length">
+                <thead>
+                <tr>
+                    <td class="blue lighten-4 py-1 w-50">Opportunity</td>
+                    <td class="blue lighten-4 py-1 w-50">Times</td>
+                </tr>
+                </thead>
+                <tbody class="px-2">
+                <tr v-for="(item, index) in list" :key="index">
+                    <td xs-12 class="py-1 w-50 text-xs-left">
+                        {{ index + 1 }}. {{ item.title}}
+                    </td>
+                    <td xs-12 class="py-1 w-50 text-xs-right">
+                        <span class="progress red"
+                              v-bind:style="{width: calculateWidth(item.time)}"
+                        ></span>
+                        <span class="time">
+                            {{item.time / 1000}} ms
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <v-flex xs12>
+                <v-img
+                        :src="require('../assets/logo.svg')"
+                        class="my-3"
+                        contain
+                        height="200"
+                ></v-img>
+            </v-flex>
+
+        </v-layout>
+    </v-container>
 </template>
 
 <script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  }
-}
+    import axios from 'axios';
+
+    export default {
+        data: () => ({
+            list: [],
+            maxTime: 0,
+            minTime: 0
+        }),
+        mounted() {
+            axios('/audit?site=https://habr.com/')
+                .then(res => {
+                    let data = res.data;
+                    if (data.length) {
+                        this.maxTime = data[0].time;
+                        this.minTime = data[data.length - 1].time;
+                        this.list = res.data;
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                })
+        },
+        methods: {
+            calculateWidth: function (time) {
+                let res = time * 100 / this.maxTime;
+
+                return res > 85 ? `${res - 15}%` : `${res}%`;
+            }
+        }
+    }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+<style>
+    .w-50 {
+        width: 50%;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+
+    .time {
+        display: inline-block;
+        min-width: 80px;
+    }
+
+    .progress {
+        display: inline-block;
+        height: 5px;
+    }
 </style>
